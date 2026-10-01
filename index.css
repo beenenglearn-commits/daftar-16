@@ -1,0 +1,60 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+html, body, #root {
+  height: 100%;
+}
+
+
+/* ---------- Refined motion & compact admin chrome ---------- */
+:root { scroll-behavior: smooth; }
+
+.ui-card {
+  transition: transform .22s cubic-bezier(.2,.8,.2,1), box-shadow .22s ease, border-color .22s ease;
+}
+.ui-card:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 8px 22px rgba(24,38,32,.07);
+}
+.ui-button {
+  transition: transform .18s ease, box-shadow .2s ease, opacity .2s ease, background-color .2s ease;
+}
+.ui-button:hover:not(:disabled) {
+  transform: translateY(-1px);
+  box-shadow: 0 6px 16px rgba(24,38,32,.09);
+}
+.ui-button:active:not(:disabled) { transform: scale(.975); }
+
+.admin-page-enter {
+  animation: adminPageIn .28s cubic-bezier(.2,.8,.2,1) both;
+}
+@keyframes adminPageIn {
+  from { opacity: 0; transform: translateY(7px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: .01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: .01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* ---------- Natural mobile interaction ---------- */
+button, a, input, textarea, select { -webkit-tap-highlight-color: transparent; }
+button, a { touch-action: manipulation; }
+button:focus-visible, a:focus-visible { outline: 3px solid rgba(184,147,58,.35); outline-offset: 2px; }
+.ui-card { will-change: transform; }
+.ui-button { will-change: transform; }
+.ui-button:hover:not(:disabled) { box-shadow: 0 8px 18px rgba(24,38,32,.11); }
+.ui-button:active:not(:disabled) { transition-duration: .08s; }
+
+/* smoother modal entrance */
+@keyframes modalIn {
+  from { opacity: 0; transform: translateY(18px) scale(.985); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+.fixed.inset-0.z-50 > div { animation: modalIn .22s cubic-bezier(.2,.8,.2,1) both; }

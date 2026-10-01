@@ -1,0 +1,9 @@
+{
+  "appId": "com.daftar.app",
+  "appName": "دفتر",
+  "webDir": "dist",
+  "bundledWebRuntime": false,
+  "server": {
+    "androidScheme": "https"
+  }
+}

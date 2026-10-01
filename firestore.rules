@@ -1,0 +1,60 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function signedIn() { return request.auth != null; }
+    function docPath(col, id) { return /databases/$(database)/documents/$(col)/$(id); }
+    function isAdmin() { return signedIn() && exists(docPath('admins', request.auth.uid)); }
+    function isWorker() {
+      return signedIn()
+        && exists(docPath('workers', request.auth.uid))
+        && get(docPath('workers', request.auth.uid)).data.active == true;
+    }
+    function myStore() { return get(docPath('workers', request.auth.uid)).data.storeId; }
+    function dataCollection(c) {
+      return c in ['incomes', 'expenses', 'debts', 'payments', 'supportRequests', 'suppliers', 'supplierTransactions'];
+    }
+    // ما يستطيع العامل إنشاءه (لا يستطيع إنشاء موردين ولا معاملات موردين)
+    function workerCreatable(c) {
+      return c in ['incomes', 'expenses', 'debts', 'payments', 'supportRequests'];
+    }
+
+    // الأدمن: حساب واحد فقط، يُنشأ مرة واحدة قبل وجود meta/setup
+    match /admins/{uid} {
+      allow read: if signedIn() && request.auth.uid == uid;
+      allow create: if signedIn() && request.auth.uid == uid
+                    && !exists(docPath('meta', 'setup'));
+    }
+    match /meta/setup {
+      allow read: if signedIn();
+      allow create: if signedIn() && !exists(docPath('meta', 'setup'));
+    }
+
+    match /stores/{sid} {
+      allow read: if isAdmin() || (isWorker() && myStore() == sid);
+      allow write: if isAdmin();
+    }
+
+    match /workers/{uid} {
+      allow read: if isAdmin() || (signedIn() && request.auth.uid == uid);
+      allow write: if isAdmin();
+    }
+
+    // كل سجلات العمل مرتبطة بمتجر عبر storeId
+    match /{col}/{id} {
+      allow read: if dataCollection(col) && (
+        isAdmin()
+        || (isWorker() && resource.data.storeId == myStore()
+            && (col != 'supportRequests' || resource.data.senderUid == request.auth.uid)
+            && col != 'suppliers' && col != 'supplierTransactions')
+      );
+      allow create: if dataCollection(col) && (
+        isAdmin()
+        || (isWorker() && workerCreatable(col)
+            && request.resource.data.storeId == myStore()
+            && request.resource.data.workerId == request.auth.uid)
+      );
+      allow update, delete: if dataCollection(col) && isAdmin();
+    }
+  }
+}
